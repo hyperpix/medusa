@@ -1,5 +1,6 @@
 import { model, OrderStatus } from "@medusajs/framework/utils"
 import { Return } from "@models"
+import { Store } from "@medusajs/modules-sdk"
 import { OrderAddress } from "./address"
 import { OrderCreditLine } from "./credit-line"
 import { OrderItem } from "./order-item"
@@ -10,6 +11,7 @@ import { OrderTransaction } from "./transaction"
 const _Order = model
   .define("Order", {
     id: model.id({ prefix: "order" }).primaryKey(),
+    store_id: model.text(),
     display_id: model.autoincrement().searchable(),
     region_id: model.text().nullable(),
     customer_id: model.text().nullable(),
@@ -54,14 +56,29 @@ const _Order = model
     returns: model.hasMany<any>(() => Return, {
       mappedBy: "order",
     }),
+    store: model.belongsTo(() => Store, {
+      foreignKey: "store_id",
+      mappedBy: "orders", // Assuming 'orders' will be defined on Store if bidirectional needed
+    }),
   })
   .cascades({
     delete: ["summary", "items", "shipping_methods", "transactions"],
   })
   .indexes([
     {
-      name: "IDX_order_display_id",
-      on: ["display_id"],
+      name: "IDX_order_store_id",
+      on: ["store_id"],
+    },
+    {
+      name: "IDX_order_display_id_store_id", // display_id might need to be unique per store
+      on: ["display_id", "store_id"],
+      // unique: true, // This needs careful consideration - display_id is auto-incrementing.
+      // Making it unique per store would mean the auto-increment needs to be aware of store_id,
+      // or we make display_id simply unique globally as it is now.
+      // For now, let's assume display_id remains globally unique or unique by other means,
+      // and just index it with store_id for faster lookups per store.
+      // If it MUST be unique per store, the autoincrement strategy needs to change.
+      // Keeping unique: false for now based on current structure.
       unique: false,
       where: "deleted_at IS NOT NULL",
     },

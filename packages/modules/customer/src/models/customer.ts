@@ -1,4 +1,5 @@
 import { model } from "@medusajs/framework/utils"
+import { Store } from "@medusajs/modules-sdk"
 import CustomerAddress from "./address"
 import CustomerGroup from "./customer-group"
 import CustomerGroupCustomer from "./customer-group-customer"
@@ -6,6 +7,7 @@ import CustomerGroupCustomer from "./customer-group-customer"
 const Customer = model
   .define("Customer", {
     id: model.id({ prefix: "cus" }).primaryKey(),
+    store_id: model.text(),
     company_name: model.text().searchable().nullable(),
     first_name: model.text().searchable().nullable(),
     last_name: model.text().searchable().nullable(),
@@ -21,6 +23,10 @@ const Customer = model
     addresses: model.hasMany(() => CustomerAddress, {
       mappedBy: "customer",
     }),
+    store: model.belongsTo(() => Store, {
+      foreignKey: "store_id",
+      mappedBy: "customers", // Assuming 'customers' will be defined on Store if bidirectional needed
+    }),
   })
   .cascades({
     delete: ["addresses"],
@@ -28,9 +34,14 @@ const Customer = model
   })
   .indexes([
     {
-      on: ["email", "has_account"],
+      name: "IDX_customer_store_id",
+      on: ["store_id"],
+    },
+    {
+      name: "IDX_customer_email_store_id_has_account_unique", // email + has_account should be unique per store
+      on: ["email", "store_id", "has_account"],
       unique: true,
-      where: "deleted_at IS NULL",
+      where: "deleted_at IS NULL AND email IS NOT NULL", // Ensure email is not null for the constraint
     },
   ])
 

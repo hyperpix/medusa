@@ -1,4 +1,5 @@
 import { model, ProductUtils } from "@medusajs/framework/utils"
+import { Store } from "@medusajs/modules-sdk"
 
 import ProductCategory from "./product-category"
 import ProductCollection from "./product-collection"
@@ -11,6 +12,7 @@ import ProductVariant from "./product-variant"
 const Product = model
   .define("Product", {
     id: model.id({ prefix: "prod" }).primaryKey(),
+    store_id: model.text(),
     title: model.text().searchable(),
     handle: model.text(),
     subtitle: model.text().searchable().nullable(),
@@ -58,14 +60,22 @@ const Product = model
       pivotTable: "product_category_product",
       mappedBy: "products",
     }),
+    store: model.belongsTo(() => Store, {
+      foreignKey: "store_id",
+      mappedBy: "products", // Assuming 'products' will be defined on Store if bidirectional needed
+    }),
   })
   .cascades({
     delete: ["variants", "options", "images"],
   })
   .indexes([
     {
-      name: "IDX_product_handle_unique",
-      on: ["handle"],
+      name: "IDX_product_store_id",
+      on: ["store_id"],
+    },
+    {
+      name: "IDX_product_handle_store_id_unique", // Ensuring handle is unique *within* a store
+      on: ["handle", "store_id"],
       unique: true,
       where: "deleted_at IS NULL",
     },

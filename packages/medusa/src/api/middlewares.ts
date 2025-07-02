@@ -44,6 +44,9 @@ import { adminUserRoutesMiddlewares } from "./admin/users/middlewares"
 import { adminWorkflowsExecutionsMiddlewares } from "./admin/workflows-executions/middlewares"
 import { authRoutesMiddlewares } from "./auth/middlewares"
 
+// Assuming the new middleware is created here:
+import { setTenantContext } from "./utils/middlewares/tenant-context.middleware"
+
 import { hooksRoutesMiddlewares } from "./hooks/middlewares"
 import { storeCartRoutesMiddlewares } from "./store/carts/middlewares"
 import { storeCollectionRoutesMiddlewares } from "./store/collections/middlewares"
@@ -62,6 +65,12 @@ import { storeReturnReasonRoutesMiddlewares } from "./store/return-reasons/middl
 import { storeShippingOptionRoutesMiddlewares } from "./store/shipping-options/middlewares"
 
 export default defineMiddlewares([
+  // Core Medusa middleware for request scoping, transactions, error handling etc. should be first.
+  // The `setTenantContext` should run after authentication has occurred but before specific route logic.
+  // Authentication itself might be handled by `authenticate` calls closer to the routes (as seen in auth/middlewares.ts)
+  // or by a global auth middleware if present. For now, placing it early.
+  setTenantContext,
+
   ...storeRoutesMiddlewares,
   ...adminCustomerGroupRoutesMiddlewares,
   ...adminCustomerRoutesMiddlewares,
