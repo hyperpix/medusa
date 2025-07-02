@@ -12,6 +12,8 @@ const Store = model
     supported_currencies: model.hasMany(() => StoreCurrency, {
       mappedBy: "store",
     }),
+    // New field for theme selection
+    active_theme_id: model.text().nullable(),
   })
   .cascades({
     delete: ["supported_currencies"],
