@@ -1,5 +1,6 @@
 import { model } from "@medusajs/framework/utils"
 import { Store } from "@medusajs/modules-sdk"
+import UserRole from "./user-role"; // Import UserRole
 
 export const User = model
   .define("user", {
@@ -14,6 +15,18 @@ export const User = model
       foreignKey: "store_id",
       mappedBy: "users", // Assuming 'users' (merchant admins) will be on Store if bidirectional
     }).nullable(), // Matches store_id being nullable
+    user_roles: model.hasMany(() => UserRole, { // Link to the join table
+      mappedBy: "user",
+    }),
+    // Alternatively, for direct many-to-many without explicitly managing UserRole entity:
+    // roles: model.manyToMany(() => Role, {
+    //   pivotTable: "user_role", // Specify the join table name
+    //   joinForeignKey: "user_id",
+    //   inverseJoinForeignKey: "role_id"
+    // }),
+  })
+  .cascades({
+    delete: ["user_roles"], // If a user is deleted, their role assignments are also deleted
   })
   .indexes([
     {
